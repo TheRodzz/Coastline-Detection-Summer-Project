@@ -118,7 +118,7 @@ if __name__ == '__main__':
     seeds = [[60, 238], [160, 160], [238, 60]]  # provide seeds
 
     # run segmentation. try different window size
-    seg_out = Fseg(Ig, ws=19, seeds=seeds)
+    seg_out = Fseg(Ig, ws=200, seeds=seeds)
 
     print ('FSEG runs in %0.2f seconds. ' % (time.time() - time0))
 
@@ -130,3 +130,4 @@ if __name__ == '__main__':
     ax[1].imshow(seg_out, cmap='gray')
     plt.tight_layout()
     plt.show()
+    # plt.savefig("path/to/save/file.png")
