@@ -107,11 +107,11 @@ def Fseg(Ig, ws, seeds):
     return seg_label.reshape((N1, N2))
 
 if __name__ == '__main__':
-    i=158
+    i=491
     while(True):
         time0 = time.time()
         # an example of using Fseg
-        sar_img = imread('cropped_image.tif')
+        sar_img = imread('cropped_image_Spk.tif')
 
         sar_img = sar_img.astype(np.float32)
         sar_img = (sar_img - np.min(sar_img)) / (np.max(sar_img) - np.min(sar_img))
@@ -130,9 +130,10 @@ if __name__ == '__main__':
         seeds = np.array(seeds)
         plt.plot(seeds[:, 1], seeds[:, 0], 'r*')
         ax[1].imshow(seg_out, cmap='gray')
+        seg_out=None
         plt.tight_layout()
         # plt.show()
-        plt.savefig(f"./results/Non_speckle_filtered_input/ws={i}_speckle_filtered")
+        plt.savefig(f"./results/Speckle_filtered_input/ws={i}_speckle_filtered")
         plt.close()
         print(f"Completed iteration {i}")
         i+=1
