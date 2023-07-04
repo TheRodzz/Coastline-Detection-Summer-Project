@@ -107,27 +107,31 @@ def Fseg(Ig, ws, seeds):
     return seg_label.reshape((N1, N2))
 
 if __name__ == '__main__':
-    time0 = time.time()
-    # an example of using Fseg
-    sar_img = imread('cropped_image.tif')
+    i=122
+    while(True):
+        time0 = time.time()
+        # an example of using Fseg
+        sar_img = imread('cropped_image.tif')
 
-    sar_img = sar_img.astype(np.float32)
-    sar_img = (sar_img - np.min(sar_img)) / (np.max(sar_img) - np.min(sar_img))
-    Ig = np.expand_dims(sar_img, axis=2)
+        sar_img = sar_img.astype(np.float32)
+        sar_img = (sar_img - np.min(sar_img)) / (np.max(sar_img) - np.min(sar_img))
+        Ig = np.expand_dims(sar_img, axis=2)
 
-    seeds = [[60, 238], [160, 160], [238, 60]]  # provide seeds
+        seeds = [[60, 238], [160, 160], [238, 60]]  # provide seeds
 
-    # run segmentation. try different window size
-    seg_out = Fseg(Ig, ws=200, seeds=seeds)
+        # run segmentation. try different window size
+        seg_out = Fseg(Ig, ws=i, seeds=seeds)
 
-    print ('FSEG runs in %0.2f seconds. ' % (time.time() - time0))
+        print ('FSEG runs in %0.2f seconds. ' % (time.time() - time0))
 
-    # show results
-    fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(10, 5))
-    # ax[0].imshow(img, cmap='gray')
-    seeds = np.array(seeds)
-    plt.plot(seeds[:, 1], seeds[:, 0], 'r*')
-    ax[1].imshow(seg_out, cmap='gray')
-    plt.tight_layout()
-    plt.show()
-    # plt.savefig("path/to/save/file.png")
+        # show results
+        fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(10, 5))
+        # ax[0].imshow(img, cmap='gray')
+        seeds = np.array(seeds)
+        plt.plot(seeds[:, 1], seeds[:, 0], 'r*')
+        ax[1].imshow(seg_out, cmap='gray')
+        plt.tight_layout()
+        # plt.show()
+        plt.savefig(f"./Non_speckle_filtered_input/results/ws={i}_speckle_filtered")
+        plt.close()
+        i+=1
