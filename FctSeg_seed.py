@@ -107,7 +107,7 @@ def Fseg(Ig, ws, seeds):
     return seg_label.reshape((N1, N2))
 
 if __name__ == '__main__':
-    i=491
+    i=688
     while(True):
         time0 = time.time()
         # an example of using Fseg
