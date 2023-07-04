@@ -101,13 +101,13 @@ def Fseg(Ig, ws, seeds):
     ZZT += np.eye(ZZT.shape[0]) * 1e-6  # Add a small constant to the diagonal
     ZZTinv = LAsci.inv(ZZT)
     Beta = np.dot(np.dot(ZZTinv, Z.T), Y.T)
-
+    ZZTinv= None
     seg_label = np.argmax(Beta, axis=0)
-
+    Beta = None
     return seg_label.reshape((N1, N2))
 
 if __name__ == '__main__':
-    i=122
+    i=158
     while(True):
         time0 = time.time()
         # an example of using Fseg
@@ -132,6 +132,7 @@ if __name__ == '__main__':
         ax[1].imshow(seg_out, cmap='gray')
         plt.tight_layout()
         # plt.show()
-        plt.savefig(f"./Non_speckle_filtered_input/results/ws={i}_speckle_filtered")
+        plt.savefig(f"./results/Non_speckle_filtered_input/ws={i}_speckle_filtered")
         plt.close()
+        print(f"Completed iteration {i}")
         i+=1
