@@ -112,6 +112,7 @@ if __name__ == '__main__':
         time0 = time.time()
         # an example of using Fseg
         sar_img = imread('cropped_image.tif')
+        height, width = sar_img.shape
 
         sar_img = sar_img.astype(np.float32)
         sar_img = (sar_img - np.min(sar_img)) / (np.max(sar_img) - np.min(sar_img))
@@ -124,13 +125,21 @@ if __name__ == '__main__':
 
         print ('FSEG runs in %0.2f seconds. ' % (time.time() - time0))
 
+
+        # Desired resolution
+        res = 1  # DPI (dots per inch)
+
+        fig, ax = plt.subplots(figsize=(width, height), dpi=res)
+
         # show results
-        fig, ax = plt.subplots(ncols=1, sharex=True, sharey=True, figsize=(10, 5))
+        # fig, ax = plt.subplots(ncols=1, sharex=True, sharey=True, figsize=(10, 5))
         # ax[0].imshow(img, cmap='gray')
         seeds = np.array(seeds)
         plt.plot(seeds[:, 1], seeds[:, 0], 'r*')
         ax.imshow(seg_out, cmap='gray')
         seg_out=None
+        ax.axis('off')  # Turn off axis labels and ticks for a clean image
+
         plt.tight_layout()
         # plt.show()
         plt.savefig(f"./results/Non_speckle_filtered_input/ws={i}_non_speckle_filtered")
