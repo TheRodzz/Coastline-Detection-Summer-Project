@@ -107,7 +107,7 @@ def Fseg(Ig, ws, seeds):
     return seg_label.reshape((N1, N2))
 
 if __name__ == '__main__':
-    i=479
+    i=100
     while(True):
         time0 = time.time()
         # an example of using Fseg
@@ -125,11 +125,11 @@ if __name__ == '__main__':
         print ('FSEG runs in %0.2f seconds. ' % (time.time() - time0))
 
         # show results
-        fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(10, 5))
+        fig, ax = plt.subplots(ncols=1, sharex=True, sharey=True, figsize=(10, 5))
         # ax[0].imshow(img, cmap='gray')
         seeds = np.array(seeds)
         plt.plot(seeds[:, 1], seeds[:, 0], 'r*')
-        ax[1].imshow(seg_out, cmap='gray')
+        ax.imshow(seg_out, cmap='gray')
         seg_out=None
         plt.tight_layout()
         # plt.show()
