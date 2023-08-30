@@ -7,7 +7,7 @@ import time
 import numpy as np
 from fseg_filters import image_filtering
 import matplotlib.pyplot as plt
-
+from sklearn.cluster import KMeans
 from scipy import linalg as LAsci
 from skimage import io
 from tifffile import imread
@@ -73,14 +73,44 @@ def SHcomp(Ig, ws, BinN=11):
     return sh_mtx
 
 
-def Fseg(Ig, ws, seeds):
+# def Fseg(Ig, ws, seeds):
+#     """
+#     Factorization based segmentation
+#     :param Ig: a n-band image
+#     :param ws: window size for local special histogram
+#     :param seeds: list of coordinates [row, column] for seeds. each seed represent one type of texture
+#     :param omega: error threshod for estimating segment number. need to adjust for different filter bank.
+#     :param nonneg_constraint: whether apply negative matrix factorization
+#     :return: segmentation label map
+#     """
+
+#     N1, N2, bn = Ig.shape
+
+#     ws = int(ws / 2)
+#     sh_mtx = SHcomp(Ig, ws)
+
+#     Z = []
+#     for seed in seeds:
+#         Z.append(sh_mtx[seed[0], seed[1], :].reshape((-1, 1)))
+
+#     Z = np.hstack(Z)
+
+#     Y = sh_mtx.reshape((N1 * N2, -1))
+
+#     ZZT = np.dot(Z.T, Z)
+#     ZZT += np.eye(ZZT.shape[0]) * 1e-6  # Add a small constant to the diagonal
+#     ZZTinv = LAsci.inv(ZZT)
+#     Beta = np.dot(np.dot(ZZTinv, Z.T), Y.T)
+#     ZZTinv= None
+#     seg_label = np.argmax(Beta, axis=0)
+#     Beta = None
+#     return seg_label.reshape((N1, N2))
+def Fseg(Ig, ws, n_clusters):
     """
-    Factorization based segmentation
+    Automated Factorization based segmentation
     :param Ig: a n-band image
     :param ws: window size for local special histogram
-    :param seeds: list of coordinates [row, column] for seeds. each seed represent one type of texture
-    :param omega: error threshod for estimating segment number. need to adjust for different filter bank.
-    :param nonneg_constraint: whether apply negative matrix factorization
+    :param n_clusters: number of texture classes
     :return: segmentation label map
     """
 
@@ -89,23 +119,29 @@ def Fseg(Ig, ws, seeds):
     ws = int(ws / 2)
     sh_mtx = SHcomp(Ig, ws)
 
+    # Automated seed estimation using k-means clustering
+    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
+    seeds = kmeans.fit_predict(sh_mtx.reshape((N1 * N2, -1)))
+
     Z = []
-    for seed in seeds:
-        Z.append(sh_mtx[seed[0], seed[1], :].reshape((-1, 1)))
+    for cluster in range(n_clusters):
+        cluster_indices = np.where(seeds == cluster)[0]
+        cluster_sh_mtx = np.mean(sh_mtx[cluster_indices, :], axis=0)
+        Z.append(cluster_sh_mtx.reshape((-1, 1)))
 
     Z = np.hstack(Z)
 
     Y = sh_mtx.reshape((N1 * N2, -1))
 
-    ZZT = np.dot(Z.T, Z)
-    ZZT += np.eye(ZZT.shape[0]) * 1e-6  # Add a small constant to the diagonal
-    ZZTinv = LAsci.inv(ZZT)
-    Beta = np.dot(np.dot(ZZTinv, Z.T), Y.T)
-    ZZTinv= None
-    seg_label = np.argmax(Beta, axis=0)
-    Beta = None
-    return seg_label.reshape((N1, N2))
+    # Estimate Beta using SVD
+    U, s, VT = np.linalg.svd(Z, full_matrices=False)
+    U_inv = np.linalg.inv(U)
+    Beta = np.dot(np.dot(VT.T, U_inv), Y.T)
 
+    # Perform segmentation based on Beta
+    seg_label = np.argmax(Beta, axis=0)
+
+    return seg_label.reshape((N1, N2))
 if __name__ == '__main__':
     i=100
     while(True):
