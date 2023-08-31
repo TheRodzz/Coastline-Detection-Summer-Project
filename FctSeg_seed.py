@@ -7,10 +7,11 @@ import time
 import numpy as np
 from fseg_filters import image_filtering
 import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
+
 from scipy import linalg as LAsci
 from skimage import io
 from tifffile import imread
+from sklearn.cluster import KMeans
 
 
 def SHcomp(Ig, ws, BinN=11):
@@ -73,44 +74,14 @@ def SHcomp(Ig, ws, BinN=11):
     return sh_mtx
 
 
-# def Fseg(Ig, ws, seeds):
-#     """
-#     Factorization based segmentation
-#     :param Ig: a n-band image
-#     :param ws: window size for local special histogram
-#     :param seeds: list of coordinates [row, column] for seeds. each seed represent one type of texture
-#     :param omega: error threshod for estimating segment number. need to adjust for different filter bank.
-#     :param nonneg_constraint: whether apply negative matrix factorization
-#     :return: segmentation label map
-#     """
-
-#     N1, N2, bn = Ig.shape
-
-#     ws = int(ws / 2)
-#     sh_mtx = SHcomp(Ig, ws)
-
-#     Z = []
-#     for seed in seeds:
-#         Z.append(sh_mtx[seed[0], seed[1], :].reshape((-1, 1)))
-
-#     Z = np.hstack(Z)
-
-#     Y = sh_mtx.reshape((N1 * N2, -1))
-
-#     ZZT = np.dot(Z.T, Z)
-#     ZZT += np.eye(ZZT.shape[0]) * 1e-6  # Add a small constant to the diagonal
-#     ZZTinv = LAsci.inv(ZZT)
-#     Beta = np.dot(np.dot(ZZTinv, Z.T), Y.T)
-#     ZZTinv= None
-#     seg_label = np.argmax(Beta, axis=0)
-#     Beta = None
-#     return seg_label.reshape((N1, N2))
-def Fseg(Ig, ws, n_clusters):
+def Fseg(Ig, ws, seeds):
     """
-    Automated Factorization based segmentation
+    Factorization based segmentation
     :param Ig: a n-band image
     :param ws: window size for local special histogram
-    :param n_clusters: number of texture classes
+    :param seeds: list of coordinates [row, column] for seeds. each seed represent one type of texture
+    :param omega: error threshod for estimating segment number. need to adjust for different filter bank.
+    :param nonneg_constraint: whether apply negative matrix factorization
     :return: segmentation label map
     """
 
@@ -119,42 +90,45 @@ def Fseg(Ig, ws, n_clusters):
     ws = int(ws / 2)
     sh_mtx = SHcomp(Ig, ws)
 
-    # Automated seed estimation using k-means clustering
-    kmeans = KMeans(n_clusters=n_clusters, random_state=0)
-    seeds = kmeans.fit_predict(sh_mtx.reshape((N1 * N2, -1)))
-
     Z = []
-    for cluster in range(n_clusters):
-        cluster_indices = np.where(seeds == cluster)[0]
-        cluster_sh_mtx = np.mean(sh_mtx[cluster_indices, :], axis=0)
-        Z.append(cluster_sh_mtx.reshape((-1, 1)))
+    for seed in seeds:
+        Z.append(sh_mtx[seed[0], seed[1], :].reshape((-1, 1)))
 
     Z = np.hstack(Z)
 
     Y = sh_mtx.reshape((N1 * N2, -1))
 
-    # Estimate Beta using SVD
-    U, s, VT = np.linalg.svd(Z, full_matrices=False)
-    U_inv = np.linalg.inv(U)
-    Beta = np.dot(np.dot(VT.T, U_inv), Y.T)
-
-    # Perform segmentation based on Beta
+    ZZT = np.dot(Z.T, Z)
+    ZZT += np.eye(ZZT.shape[0]) * 1e-6  # Add a small constant to the diagonal
+    ZZTinv = LAsci.inv(ZZT)
+    Beta = np.dot(np.dot(ZZTinv, Z.T), Y.T)
+    ZZTinv= None
     seg_label = np.argmax(Beta, axis=0)
-
+    Beta = None
     return seg_label.reshape((N1, N2))
+
 if __name__ == '__main__':
-    i=100
+    i=1
     while(True):
         time0 = time.time()
         # an example of using Fseg
-        sar_img = imread('cropped_image.tif')
+        sar_img = imread('./croppedimages/cropped_image2.tif')
         height, width = sar_img.shape
 
         sar_img = sar_img.astype(np.float32)
         sar_img = (sar_img - np.min(sar_img)) / (np.max(sar_img) - np.min(sar_img))
         Ig = np.expand_dims(sar_img, axis=2)
 
-        seeds = [[60, 238], [160, 160], [238, 60]]  # provide seeds
+        # Compute seeds automatically using K-means
+        n_clusters = 3  # number of seeds
+        kmeans = KMeans(n_clusters=n_clusters, n_init=10, random_state=0).fit(sar_img.reshape(-1, 1))
+        centers = kmeans.cluster_centers_
+
+        # Convert cluster centers to seeds
+        seeds = []
+        for center in centers:
+            coord = np.argmin(np.abs(sar_img - center))
+            seeds.append([coord // width, coord % width])
 
         # run segmentation. try different window size
         seg_out = Fseg(Ig, ws=i, seeds=seeds)
@@ -178,7 +152,7 @@ if __name__ == '__main__':
 
         plt.tight_layout()
         # plt.show()
-        plt.savefig(f"./results/Non_speckle_filtered_input/ws={i}_non_speckle_filtered")
+        plt.savefig(f"./croppedimages/results/cropped_image2/ws={i}")
         plt.close()
         print(f"Completed iteration {i}")
         i+=1
